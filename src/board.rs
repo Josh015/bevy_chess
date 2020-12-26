@@ -87,10 +87,7 @@ impl Default for PlayerTurn {
 }
 impl PlayerTurn {
     fn change(&mut self) {
-        self.0 = match self.0 {
-            PieceColor::White => PieceColor::Black,
-            PieceColor::Black => PieceColor::White,
-        }
+        self.0 = self.0.opposite();
     }
 }
 
@@ -232,13 +229,7 @@ fn despawn_taken_pieces(
     for (entity, piece, _taken) in query.iter() {
         // If the king is taken, we should exit
         if piece.piece_type == PieceType::King {
-            println!(
-                "{} won! Thanks for playing!",
-                match piece.color {
-                    PieceColor::White => "Black",
-                    PieceColor::Black => "White",
-                }
-            );
+            println!("{} won! Thanks for playing!", piece.color.opposite());
             app_exit_events.send(AppExit);
         }
 

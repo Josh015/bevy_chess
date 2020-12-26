@@ -1,4 +1,4 @@
-use crate::{board::*, pieces::*};
+use crate::board::*;
 use bevy::prelude::*;
 
 // Component to mark the Text entity
@@ -33,7 +33,7 @@ fn init_next_move_text(
             parent
                 .spawn(TextBundle {
                     text: Text {
-                        value: "Next move: White".to_string(),
+                        value: "Loading...".to_string(),
                         font,
                         style: TextStyle {
                             font_size: 40.0,
@@ -53,13 +53,7 @@ fn next_move_text_update(
     mut query: Query<(&mut Text, &NextMoveText)>,
 ) {
     for (mut text, _tag) in query.iter_mut() {
-        text.value = format!(
-            "Next move: {}",
-            match turn.0 {
-                PieceColor::White => "White",
-                PieceColor::Black => "Black",
-            }
-        );
+        text.value = format!("Next move: {}", turn.0);
     }
 }
 
@@ -70,8 +64,8 @@ fn log_text_changes(query: Query<&Text, Mutated<Text>>) {
     }
 }
 
-pub struct UIPlugin;
-impl Plugin for UIPlugin {
+pub struct UiPlugin;
+impl Plugin for UiPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system(init_next_move_text.system())
             .add_system(next_move_text_update.system())

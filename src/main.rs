@@ -15,15 +15,15 @@ fn main() {
         // Set WindowDescriptor Resource to change title and size
         .add_resource(WindowDescriptor {
             title: "Chess!".to_string(),
-            width: 1600.,
-            height: 1600.,
+            width: 600.,
+            height: 600.,
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(PickingPlugin)
         .add_plugin(BoardPlugin)
         .add_plugin(PiecesPlugin)
-        .add_plugin(UIPlugin)
+        .add_plugin(UiPlugin)
         .add_startup_system(setup.system())
         .run();
 }

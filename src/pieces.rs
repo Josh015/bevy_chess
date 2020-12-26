@@ -1,9 +1,29 @@
+use std::fmt;
+
 use bevy::prelude::*;
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum PieceColor {
     White,
     Black,
+}
+
+impl PieceColor {
+    pub fn opposite(self) -> PieceColor {
+        match self {
+            PieceColor::White => PieceColor::Black,
+            PieceColor::Black => PieceColor::White,
+        }
+    }
+}
+
+impl fmt::Display for PieceColor {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            PieceColor::White => write!(f, "White"),
+            PieceColor::Black => write!(f, "Black"),
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]
