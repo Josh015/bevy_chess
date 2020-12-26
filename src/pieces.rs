@@ -237,6 +237,15 @@ fn create_pieces(
     // Spawn the entities.
     let pieces = vec![
         (
+            PieceType::Pawn,
+            Vec3::new(-0.2, 0., 2.6),
+            vec![asset_server.load("models/chess_kit/pieces.glb#Mesh2/Primitive0")],
+            vec![
+                (PieceColor::White, (0..8).map(|i| (1, i)).collect()),
+                (PieceColor::Black, (0..8).map(|i| (6, i)).collect()),
+            ],
+        ),
+        (
             PieceType::Rook,
             Vec3::new(-0.1, 0., 1.8),
             vec![asset_server.load("models/chess_kit/pieces.glb#Mesh5/Primitive0")],
@@ -285,15 +294,6 @@ fn create_pieces(
             vec![
                 (PieceColor::White, vec![(0, 4)]),
                 (PieceColor::Black, vec![(7, 4)]),
-            ],
-        ),
-        (
-            PieceType::Pawn,
-            Vec3::new(-0.2, 0., 2.6),
-            vec![asset_server.load("models/chess_kit/pieces.glb#Mesh2/Primitive0")],
-            vec![
-                (PieceColor::White, (0..8).map(|i| (1, i)).collect()),
-                (PieceColor::Black, (0..8).map(|i| (6, i)).collect()),
             ],
         ),
     ];
