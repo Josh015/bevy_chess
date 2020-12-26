@@ -5,6 +5,7 @@ use bevy_mod_picking::*;
 pub struct Square {
     pub x: u8,
     pub y: u8,
+    pub is_valid_move: bool
 }
 impl Square {
     fn is_white(&self) -> bool {
@@ -36,7 +37,7 @@ fn create_board(
                     ..Default::default()
                 })
                 .with(PickableMesh::default())
-                .with(Square { x: i, y: j });
+                .with(Square { x: i, y: j, is_valid_move: false });
         }
     }
 }
@@ -63,6 +64,8 @@ fn color_squares(
             Color::rgb(0.8, 0.3, 0.3)
         } else if Some(entity) == selected_square.entity {
             Color::rgb(0.9, 0.1, 0.1)
+        } else if square.is_valid_move {
+            Color::rgb(0.1, 0.1, 0.9)
         } else if square.is_white() {
             Color::rgb(1., 0.9, 0.9)
         } else {
@@ -121,7 +124,7 @@ fn select_piece(
     selected_square: ChangedRes<SelectedSquare>,
     mut selected_piece: ResMut<SelectedPiece>,
     turn: Res<PlayerTurn>,
-    squares_query: Query<&Square>,
+    mut squares_query: Query<&mut Square>,
     pieces_query: Query<(Entity, &Piece)>,
 ) {
     let square_entity = if let Some(entity) = selected_square.entity {
@@ -130,7 +133,7 @@ fn select_piece(
         return;
     };
 
-    let square = if let Ok(square) = squares_query.get(square_entity) {
+    let square = if let Ok(square) = squares_query.get_mut(square_entity) {
         square
     } else {
         return;
@@ -144,6 +147,26 @@ fn select_piece(
                 selected_piece.entity = Some(piece_entity);
                 break;
             }
+        }
+    }
+
+    if let Some(selected_piece_entity) = selected_piece.entity {
+        // Mark all valid movement squares for the currently selected piece.
+        let pieces_vec: Vec<Piece> = pieces_query.iter().map(|(_, piece)| *piece).collect();
+        let piece =
+            if let Ok((_piece_entity, piece)) = pieces_query.get(selected_piece_entity) {
+                piece
+            } else {
+                return;
+            };
+
+        for mut square in squares_query.iter_mut() {
+            square.is_valid_move = piece.is_move_valid((square.x, square.y), pieces_vec.clone());
+        }
+    } else {
+        // Reset all squares back to default state.
+        for mut square in squares_query.iter_mut() {
+            square.is_valid_move = false;
         }
     }
 }
@@ -170,7 +193,6 @@ fn move_piece(
     };
 
     if let Some(selected_piece_entity) = selected_piece.entity {
-        let pieces_vec = pieces_query.iter_mut().map(|(_, piece)| *piece).collect();
         let pieces_entity_vec = pieces_query
             .iter_mut()
             .map(|(entity, piece)| (entity, *piece))
@@ -183,7 +205,7 @@ fn move_piece(
                 return;
             };
 
-        if piece.is_move_valid((square.x, square.y), pieces_vec) {
+        if square.is_valid_move {
             // Check if a piece of the opposite color exists in this square and despawn it
             for (other_entity, other_piece) in pieces_entity_vec {
                 if other_piece.x == square.x

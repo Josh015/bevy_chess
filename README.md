@@ -5,6 +5,7 @@ This is just me tinkering with some modifications to [Guim Caballero's](https://
 - [x] Centralize PieceColor display code.
 - [x] Generalize piece spawn code to make it data-driven.
 - [x] Generalize code to allow setting up both sets with same function.
+- [x] Only highlight squares that are valid to select for current turn and movement option.
 - [ ] Prevent picking while piece(s) are moving.
 - [ ] Rotate black knights & bishops to face correct direction.
 - [ ] Highlight valid destination squares for selected piece.
