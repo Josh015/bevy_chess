@@ -9,10 +9,10 @@ pub enum PieceColor {
 }
 
 impl PieceColor {
-    pub fn opposite(self) -> PieceColor {
+    pub fn opposite(self) -> Self {
         match self {
-            PieceColor::White => PieceColor::Black,
-            PieceColor::Black => PieceColor::White,
+            Self::White => Self::Black,
+            Self::Black => Self::White,
         }
     }
 }
@@ -20,8 +20,8 @@ impl PieceColor {
 impl fmt::Display for PieceColor {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            PieceColor::White => write!(f, "White"),
-            PieceColor::Black => write!(f, "Black"),
+            Self::White => write!(f, "White"),
+            Self::Black => write!(f, "Black"),
         }
     }
 }
