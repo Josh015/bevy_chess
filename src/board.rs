@@ -5,7 +5,7 @@ use bevy_mod_picking::*;
 pub struct Square {
     pub x: u8,
     pub y: u8,
-    pub is_valid_move: bool
+    pub is_valid_move: bool,
 }
 impl Square {
     fn is_white(&self) -> bool {
@@ -37,7 +37,11 @@ fn create_board(
                     ..Default::default()
                 })
                 .with(PickableMesh::default())
-                .with(Square { x: i, y: j, is_valid_move: false });
+                .with(Square {
+                    x: i,
+                    y: j,
+                    is_valid_move: false,
+                });
         }
     }
 }
@@ -171,12 +175,11 @@ fn select_piece(
     if let Some(selected_piece_entity) = selected_piece.entity {
         // Mark all valid movement squares for the currently selected piece.
         let pieces_vec: Vec<Piece> = pieces_query.iter().map(|(_, piece)| *piece).collect();
-        let piece =
-            if let Ok((_piece_entity, piece)) = pieces_query.get(selected_piece_entity) {
-                piece
-            } else {
-                return;
-            };
+        let piece = if let Ok((_piece_entity, piece)) = pieces_query.get(selected_piece_entity) {
+            piece
+        } else {
+            return;
+        };
 
         for mut square in squares_query.iter_mut() {
             square.is_valid_move = piece.is_move_valid((square.x, square.y), pieces_vec.clone());
