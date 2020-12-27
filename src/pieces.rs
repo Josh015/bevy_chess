@@ -36,17 +36,35 @@ pub enum PieceType {
     Pawn,
 }
 
-struct PieceMaterials {
+struct PieceData {
     black_color: Handle<StandardMaterial>,
     white_color: Handle<StandardMaterial>,
+    pawn_mesh: Handle<Mesh>,
+    rook_mesh: Handle<Mesh>,
+    knight_1_mesh: Handle<Mesh>,
+    knight_2_mesh: Handle<Mesh>,
+    bishop_mesh: Handle<Mesh>,
+    queen_mesh: Handle<Mesh>,
+    king_1_mesh: Handle<Mesh>,
+    king_2_mesh: Handle<Mesh>,
 }
 
-impl FromResources for PieceMaterials {
+impl FromResources for PieceData {
     fn from_resources(resources: &Resources) -> Self {
+        let asset_server = resources.get_mut::<AssetServer>().unwrap();
         let mut materials = resources.get_mut::<Assets<StandardMaterial>>().unwrap();
-        PieceMaterials {
+
+        PieceData {
             black_color: materials.add(Color::rgb(0.3, 0.3, 0.3).into()),
             white_color: materials.add(Color::rgb(1., 0.8, 0.8).into()),
+            pawn_mesh: asset_server.load("models/chess_kit/pieces.glb#Mesh2/Primitive0"),
+            rook_mesh: asset_server.load("models/chess_kit/pieces.glb#Mesh5/Primitive0"),
+            knight_1_mesh: asset_server.load("models/chess_kit/pieces.glb#Mesh3/Primitive0"),
+            knight_2_mesh: asset_server.load("models/chess_kit/pieces.glb#Mesh4/Primitive0"),
+            bishop_mesh: asset_server.load("models/chess_kit/pieces.glb#Mesh6/Primitive0"),
+            queen_mesh: asset_server.load("models/chess_kit/pieces.glb#Mesh7/Primitive0"),
+            king_1_mesh: asset_server.load("models/chess_kit/pieces.glb#Mesh0/Primitive0"),
+            king_2_mesh: asset_server.load("models/chess_kit/pieces.glb#Mesh1/Primitive0"),
         }
     }
 }
@@ -240,17 +258,10 @@ fn move_pieces(time: Res<Time>, mut query: Query<(&mut Transform, &Piece)>) {
     }
 }
 
-fn create_pieces(
-    commands: &mut Commands,
-    asset_server: Res<AssetServer>,
-    materials: Res<PieceMaterials>,
-) {
-    // Spawn the entities.
+fn create_pieces(commands: &mut Commands, piece_data: Res<PieceData>) {
     let pieces = vec![
         (
             PieceType::Pawn,
-            Vec3::new(-0.2, 0., 2.6),
-            vec![asset_server.load("models/chess_kit/pieces.glb#Mesh2/Primitive0")],
             vec![
                 (PieceColor::White, (0..8).map(|i| (1, i)).collect()),
                 (PieceColor::Black, (0..8).map(|i| (6, i)).collect()),
@@ -258,8 +269,6 @@ fn create_pieces(
         ),
         (
             PieceType::Rook,
-            Vec3::new(-0.1, 0., 1.8),
-            vec![asset_server.load("models/chess_kit/pieces.glb#Mesh5/Primitive0")],
             vec![
                 (PieceColor::White, vec![(0, 0), (0, 7)]),
                 (PieceColor::Black, vec![(7, 0), (7, 7)]),
@@ -267,11 +276,6 @@ fn create_pieces(
         ),
         (
             PieceType::Knight,
-            Vec3::new(-0.2, 0., 0.9),
-            vec![
-                asset_server.load("models/chess_kit/pieces.glb#Mesh3/Primitive0"),
-                asset_server.load("models/chess_kit/pieces.glb#Mesh4/Primitive0"),
-            ],
             vec![
                 (PieceColor::White, vec![(0, 1), (0, 6)]),
                 (PieceColor::Black, vec![(7, 1), (7, 6)]),
@@ -279,8 +283,6 @@ fn create_pieces(
         ),
         (
             PieceType::Bishop,
-            Vec3::new(-0.1, 0., 0.),
-            vec![asset_server.load("models/chess_kit/pieces.glb#Mesh6/Primitive0")],
             vec![
                 (PieceColor::White, vec![(0, 2), (0, 5)]),
                 (PieceColor::Black, vec![(7, 2), (7, 5)]),
@@ -288,8 +290,6 @@ fn create_pieces(
         ),
         (
             PieceType::Queen,
-            Vec3::new(-0.2, 0., -0.95),
-            vec![asset_server.load("models/chess_kit/pieces.glb#Mesh7/Primitive0")],
             vec![
                 (PieceColor::White, vec![(0, 3)]),
                 (PieceColor::Black, vec![(7, 3)]),
@@ -297,11 +297,6 @@ fn create_pieces(
         ),
         (
             PieceType::King,
-            Vec3::new(-0.2, 0., -1.9),
-            vec![
-                asset_server.load("models/chess_kit/pieces.glb#Mesh0/Primitive0"),
-                asset_server.load("models/chess_kit/pieces.glb#Mesh1/Primitive0"),
-            ],
             vec![
                 (PieceColor::White, vec![(0, 4)]),
                 (PieceColor::Black, vec![(7, 4)]),
@@ -310,17 +305,9 @@ fn create_pieces(
     ];
 
     for piece in pieces {
-        for color in piece.3 {
+        for color in piece.1 {
             for position in color.1 {
-                spawn_piece(
-                    commands,
-                    &materials,
-                    color.0,
-                    piece.0,
-                    position,
-                    piece.1,
-                    piece.2.iter().map(|mesh| mesh.clone()).collect(),
-                );
+                spawn_piece(commands, &piece_data, color.0, piece.0, position);
             }
         }
     }
@@ -328,12 +315,10 @@ fn create_pieces(
 
 fn spawn_piece(
     commands: &mut Commands,
-    materials: &Res<PieceMaterials>,
+    piece_data: &Res<PieceData>,
     piece_color: PieceColor,
     piece_type: PieceType,
     position: (u8, u8),
-    child_translation: Vec3,
-    meshes: Vec<Handle<Mesh>>,
 ) {
     commands
         // Spawn parent entity
@@ -353,12 +338,33 @@ fn spawn_piece(
         })
         // Add children to the parent
         .with_children(|parent| {
+            let (meshes, child_translation) = match piece_type {
+                PieceType::Pawn => (vec![piece_data.pawn_mesh.clone()], Vec3::new(-0.2, 0., 2.6)),
+                PieceType::Rook => (vec![piece_data.rook_mesh.clone()], Vec3::new(-0.1, 0., 1.8)),
+                PieceType::Knight => (
+                    vec![
+                        piece_data.knight_1_mesh.clone(),
+                        piece_data.knight_2_mesh.clone(),
+                    ],
+                    Vec3::new(-0.2, 0., 0.9),
+                ),
+                PieceType::Bishop => (vec![piece_data.bishop_mesh.clone()], Vec3::new(-0.1, 0., 0.)),
+                PieceType::Queen => (vec![piece_data.queen_mesh.clone()], Vec3::new(-0.2, 0., -0.95)),
+                PieceType::King => (
+                    vec![
+                        piece_data.king_1_mesh.clone(),
+                        piece_data.king_2_mesh.clone(),
+                    ],
+                    Vec3::new(-0.2, 0., -1.9),
+                ),
+            };
+
             for mesh in meshes {
                 parent.spawn(PbrBundle {
                     mesh: mesh,
                     material: match piece_color {
-                        PieceColor::White => materials.white_color.clone(),
-                        PieceColor::Black => materials.black_color.clone(),
+                        PieceColor::White => piece_data.white_color.clone(),
+                        PieceColor::Black => piece_data.black_color.clone(),
                     },
                     transform: {
                         let mut transform = Transform::from_translation(child_translation);
@@ -374,7 +380,7 @@ fn spawn_piece(
 pub struct PiecesPlugin;
 impl Plugin for PiecesPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.init_resource::<PieceMaterials>()
+        app.init_resource::<PieceData>()
             .add_startup_system(create_pieces.system())
             .add_system(move_pieces.system());
     }
