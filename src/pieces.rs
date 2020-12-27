@@ -36,6 +36,21 @@ pub enum PieceType {
     Pawn,
 }
 
+struct PieceMaterials {
+    black_color: Handle<StandardMaterial>,
+    white_color: Handle<StandardMaterial>,
+}
+
+impl FromResources for PieceMaterials {
+    fn from_resources(resources: &Resources) -> Self {
+        let mut materials = resources.get_mut::<Assets<StandardMaterial>>().unwrap();
+        PieceMaterials {
+            black_color: materials.add(Color::rgb(0.3, 0.3, 0.3).into()),
+            white_color: materials.add(Color::rgb(1., 0.8, 0.8).into()),
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct Piece {
     pub color: PieceColor,
@@ -228,12 +243,8 @@ fn move_pieces(time: Res<Time>, mut query: Query<(&mut Transform, &Piece)>) {
 fn create_pieces(
     commands: &mut Commands,
     asset_server: Res<AssetServer>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: Res<PieceMaterials>,
 ) {
-    // Add some materials
-    let white_material = materials.add(Color::rgb(1., 0.8, 0.8).into());
-    let black_material = materials.add(Color::rgb(0.3, 0.3, 0.3).into());
-
     // Spawn the entities.
     let pieces = vec![
         (
@@ -303,10 +314,7 @@ fn create_pieces(
             for position in color.1 {
                 spawn_piece(
                     commands,
-                    match color.0 {
-                        PieceColor::White => white_material.clone(),
-                        PieceColor::Black => black_material.clone(),
-                    },
+                    &materials,
                     color.0,
                     piece.0,
                     position,
@@ -320,7 +328,7 @@ fn create_pieces(
 
 fn spawn_piece(
     commands: &mut Commands,
-    material: Handle<StandardMaterial>,
+    materials: &Res<PieceMaterials>,
     piece_color: PieceColor,
     piece_type: PieceType,
     position: (u8, u8),
@@ -348,7 +356,10 @@ fn spawn_piece(
             for mesh in meshes {
                 parent.spawn(PbrBundle {
                     mesh: mesh,
-                    material: material.clone(),
+                    material: match piece_color {
+                        PieceColor::White => materials.white_color.clone(),
+                        PieceColor::Black => materials.black_color.clone(),
+                    },
                     transform: {
                         let mut transform = Transform::from_translation(child_translation);
                         transform.apply_non_uniform_scale(Vec3::new(0.2, 0.2, 0.2));
@@ -363,7 +374,8 @@ fn spawn_piece(
 pub struct PiecesPlugin;
 impl Plugin for PiecesPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(create_pieces.system())
+        app.init_resource::<PieceMaterials>()
+            .add_startup_system(create_pieces.system())
             .add_system(move_pieces.system());
     }
 }
