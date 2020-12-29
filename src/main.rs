@@ -8,6 +8,7 @@ use board::*;
 mod ui;
 use ui::*;
 
+#[bevy_main]
 fn main() {
     App::build()
         // Set antialiasing to use 4 samples
